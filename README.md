@@ -85,6 +85,10 @@ public eum MainEum{
 
 在spring框架中,无论是xml配置,注解配置,都被称为配置元数据,所谓元数据即描述数据的数据。元数据本身不具备任何可执行的能力,只能通过外界代码来对这些元数据解析后进行一些有意义的操作。spring容器解析这些配置元数据进行bean的初始化、配置和管理依赖。比如生命bean的配置:@Component、@Service等。注入bean的注解:@Autowried等,都属于元数据。
 
+## 追踪@ConditionalOnWebApplication源码的一点感悟
+
+首先我在看到![1566660178847](assets/1566660178847.png)这个注解的时候,发现他是一个组合注解,被这个注解标注的bean是否加载,本质上是由@Condition来决定的,于是理所当然的我就点击进去OnWebApplicationCondition,希望能找到matches方法,但是点击进去后发现![1566660344180](assets/1566660344180.png)当前类并没有matches方法(这里已经展示了UML类图),**我们需要先找到实现matches方法的地方,因为当前注解需要的类如下**![1566660479297](assets/1566660479297.png)@Condition注解追中需要的类型是Condition,所以该注解在运行的时候,只能通过向上转型的方式调用到(因为他也跟不知道子类有啥别的方法,当然也无法进行调用)![1566660525998](assets/1566660525998.png)Condition接口类型的matches方法。回到OnWebApplicationCondition类继续向上跟,找到matches方法,因为只有这个方法最终被调用,一切的逻辑落脚掉都是这个方法,只要找到这个方法就好办了,根据子类没有就在父类中找的原则我们找到这个类![1566660825933](assets/1566660825933.png)发现他就是实现了Condition接口的matches方法,我们就继续跟这个方法,先从return看![1566660896767](assets/1566660896767.png)我们发现返回boolean是通过这个类的isMatch方法来实现的,那就先看看怎么获取的这个类,点击getMatchOutcome方法,发现在当前类中getMatchOutcome方法是一个抽象方法,那肯定在子类中有他的实现![1566660989803](assets/1566660989803.png)这时候我们就需要跟这个方法的实现了,![1566661100984](assets/1566661100984.png)因为我们现在跟的是webCondition,找到他的实现类![1566661171483](assets/1566661171483.png)顺利的找到这个方法了,依旧是先看方法的return部分我们发现ConditionOutcome.match(...)是一个工厂方法,用于创建ConditionOutcome的实例对象,在该对象中我们可以发现![1566661336029](assets/1566661336029.png)与![1566661311562](assets/1566661311562.png)此事再回头看![1566661399893](assets/1566661399893.png)就显得很清楚了,逻辑就是通过判断构造一个ConditionOutcome对象实例,这个对象实例调用isMatch()就会返回是否匹配成功的布尔值,从而实现根据条件注入当前标注举个例子,就是下图中的![1566661560619](assets/1566661560619.png)WebFluxAutoConfiguration这个bean是否会被加入到ioc容器中。记住组合注解仅仅就是将几个注解的功能进行组合,而不会改变功能本身,所以ConditionalOnWebApplication并不会改变@Conditional注解的作用@Conditional如果调用matches返回false的话,这个bean就是不会被加载入IOC容器中的!
+
 #服务层
 
 ##JavaEE相关
@@ -171,10 +175,10 @@ Spring Boot将功能场景抽取出来，做成一个个的starters（启动器�
 
 ###为什么要使用springboot启动器
 
-还是因为两点:
+还是为了两点:
 
-1. 自动配置
-2. 依赖管理
+1. 自动配置(让我们少配置写bean)
+2. 起步依赖(简化maven的坐标依赖,防止包的版本错乱)
 
 回想起我们自己配置ProcessEngine的场景,如果能引入一个起步依赖然后通过@Autowired直接注入一个合适的ProcessEngine(或各种Service)岂不美哉,又能减少配置,又能防止重复配置可能产生的人为错误,何乐不为呢!
 
