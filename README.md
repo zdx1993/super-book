@@ -134,11 +134,21 @@ base64编码，就是通过将数据降维，将三个字节的数据放在四�
 
 这里值得一提的是，**用户的会话保持，并不意味着用户就得登录**，登陆成功后会向session空间中存储一个用户信息的K-V键值对，但是如果没有登录，这个session空间还是存在的，对用的就是目前操作的客户端浏览器，**要把会话保持跟用户登录进行区分**，只要有会话保持我们就能做很多事情，比如一次性验证码，比如后端防止用户重复提交，等等。
 
-## 服务端防止表单重复提交的时序图
+###数据查重
+
+一般而言将需要查重的字段在数据库中count一下,有几个字段就通过AND连接,看看返回的int值是否大于1。
+
+如果是查看是否存在数据,需要count==0。
+
+###mybatis数据库空判断
+
+在查询数据的时候,如果存在xx=null这样的情况,肯有可能一条数据都查不出来,所以一般通过<if test="xx!=null">...内容...</if>进行处理,要不然就是在pojo类中,直接给属性赋予初始值。
+
+###服务端防止表单重复提交的时序图
 
 ![1567077078736](assets/1567077078736.png)
 
-## 记住我功能实现
+###记住我功能实现
 
 以下为记住我功能实现
 
@@ -147,6 +157,65 @@ base64编码，就是通过将数据降维，将三个字节的数据放在四�
 注意,记住我功能的实现,是存在第一次登录与第二次登录的情况的,首次登录勾选记住我,然后回写用户名密码到客户端的cookie。
 
 **判断是否携带登录信息的逻辑应该写在过滤器中!**
+
+### 缓存redis使用套路
+
+1. 引入redis客户端依赖
+2. 对redis客户端进行配置，为了能够与redis服务器进行交互
+3. 封装redis连接池工具类
+4. 缓存我们认为需要缓存的方法
+   1. 实际中我们一定需要明确对哪些方法进行缓存，以及我们需要对哪些方法进行缓存，而不是说随便一个方法都需要缓存
+   2. 比如说实时性要求非常高的数据，就不一定适合缓存。有些请求并没有什么数据库操作,当然也不需要缓存,如果数据使用并不频繁也不需要缓存,是否缓存是根据业务决定的!权限框架的缓存对我们并不是很透明,所以我们自己实现缓存是很有必要的。
+
+### 通过拦截器校验用户是否登录的逻辑
+
+首先我们清楚,在用户登陆成功后,会将用户信息保存到一个内存空间中(session空间,request空间,redis空间),然后当下一次请求来的时候,会带有一个标识,以便服务器找到那个记录用户信息的内存空间(因为所选取技术不同,所以找寻的思路也不相同)。
+
+通过以上逻辑我们就可以明白了,想要知道用户是否登录,只要在拦截器或者过滤器中,根据请求中的标识,去寻找保存用户的内存空间,如果能找到,则说明用户已经登录,如果找不到就重定向到登录页面,当然了具体的做法很多,但是思路的核心就是在服务端找到这个用户空间才能说明用户已经登录了。
+
+### ThreadLocal的使用场景及方式
+
+比如:
+
+```java
+package com.mmall.common;
+
+import com.mmall.model.SysUser;
+
+import javax.servlet.http.HttpServletRequest;
+
+public class RequestHolder {
+
+    private static final ThreadLocal<SysUser> userHolder = new ThreadLocal<SysUser>();
+
+    private static final ThreadLocal<HttpServletRequest> requestHolder = new ThreadLocal<HttpServletRequest>();
+
+    public static void add(SysUser sysUser) {
+        userHolder.set(sysUser);
+    }
+
+    public static void add(HttpServletRequest request) {
+        requestHolder.set(request);
+    }
+
+    public static SysUser getCurrentUser() {
+        return userHolder.get();
+    }
+
+    public static HttpServletRequest getCurrentRequest() {
+        return requestHolder.get();
+    }
+
+    public static void remove() {
+        userHolder.remove();
+        requestHolder.remove();
+    }
+}
+```
+
+通过以上代码我们可以知道,在开始一次请求的时候,向threadlocal中存入用户登录信息以及当前请求的request对象,这样子在**当前请求的任意一个位置**,都可以通过RequestHolder(案例中,带泛型)这个类快速获取这两个对象。
+
+至于销毁当前threadlocal对象的方法,可以在拦截器、过滤器的最后进行调用,这也是AOP的思想。
 
 ##spring相关
 
