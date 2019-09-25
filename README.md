@@ -1113,3 +1113,98 @@ Cache在环形空间的落点一般是通过机器的ip地址或是主机名或�
 以上consistent hash算法已经最大程度的减少了,服务器增减时的缓存重新分布。
 
 注意一点**上面的consistent hash算法并不是仅仅适用于redis,而是一个经典的分布式算。**
+
+# 工作技能
+
+> 主要是记录一些技术框架使用思路,比如POI,activiti,这个章节的特点就是都是技能型知识,第一要求就是看到自制文档后能快速上手使用。并且代码比较固定,需要我们强行背下来,是**记忆为主理解为辅**的章节。
+
+## POI
+
+在企业级应用开发中，Excel报表是一种最常见的报表需求。Excel报表开发一般分为两种形式： 
+
+1. 为了方便操作，基于Excel的报表批量上传数据。
+2. 通过java代码生成Excel报表。 
+
+POI导入坐标时需要注意,我们是按照我们所要处理的场景去导入坐标,具体的导入规则如下:
+
+Apache POI分布包括对许多文档文件格式的支持。该支持在多个Jar文件中提供。并不是所有的jar包都是需要的。下表显示了POI组件、Maven存储库标记和项目Jar文件之间的关系。
+
+| Component                                                    | Application type        | Maven artifactId                                             | Notes                                                        |
+| ------------------------------------------------------------ | ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [POIFS](https://blog.csdn.net/u010947534/article/details/poifs/index.html) | OLE2 Filesystem         | *poi*                                                        | Required to work with OLE2 / POIFS based files               |
+| [HPSF](https://blog.csdn.net/u010947534/article/details/hpsf/index.html) | OLE2 Property Sets      | *poi*                                                        |                                                              |
+| [HSSF](https://blog.csdn.net/u010947534/article/details/spreadsheet/index.html) | Excel XLS               | *poi*                                                        | For HSSF only, if common SS is needed see below              |
+| [HSLF](https://blog.csdn.net/u010947534/article/details/slideshow/index.html) | PowerPoint PPT          | *poi-scratchpad*                                             |                                                              |
+| [HWPF](https://blog.csdn.net/u010947534/article/details/document/index.html) | Word DOC                | *poi-scratchpad*                                             |                                                              |
+| [HDGF](https://blog.csdn.net/u010947534/article/details/diagram/index.html) | Visio VSD               | *poi-scratchpad*                                             |                                                              |
+| [HPBF](https://blog.csdn.net/u010947534/article/details/hpbf/index.html) | Publisher PUB           | *poi-scratchpad*                                             |                                                              |
+| [HSMF](https://blog.csdn.net/u010947534/article/details/hsmf/index.html) | Outlook MSG             | *poi-scratchpad*                                             |                                                              |
+| DDF                                                          | Escher common drawings  | *poi*                                                        |                                                              |
+| HWMF                                                         | WMF drawings            | *poi-scratchpad*                                             |                                                              |
+| [OpenXML4J](https://blog.csdn.net/u010947534/article/details/oxml4j/index.html) | OOXML                   | *poi-ooxml* plus either *poi-ooxml-schemas* or *ooxml-schemas* and *ooxml-security* | See notes below for differences between these options        |
+| [XSSF](https://blog.csdn.net/u010947534/article/details/spreadsheet/index.html) | Excel XLSX              | *poi-ooxml*                                                  |                                                              |
+| [XSLF](https://blog.csdn.net/u010947534/article/details/slideshow/index.html) | PowerPoint PPTX         | *poi-ooxml*                                                  |                                                              |
+| [XWPF](https://blog.csdn.net/u010947534/article/details/document/index.html) | Word DOCX               | *poi-ooxml*                                                  |                                                              |
+| [XDGF](https://blog.csdn.net/u010947534/article/details/diagram/index.html) | Visio VSDX              | *poi-ooxml*                                                  |                                                              |
+| [Common SL](https://blog.csdn.net/u010947534/article/details/slideshow/index.html) | PowerPoint PPT and PPTX | *poi-scratchpad* and *poi-ooxml*                             | SL code is in the core POI jar, but implementations are in poi-scratchpad and poi-ooxml. |
+| [Common SS](https://blog.csdn.net/u010947534/article/details/spreadsheet/index.html) | Excel XLS and XLSX      | *poi-ooxml*                                                  | WorkbookFactory and friends all require poi-ooxml, not just core poi |
+
+此表显示jar依赖关系。“version - yyymmdd”是POI版本。你可以在 [downloads page](https://blog.csdn.net/u010947534/article/details/download.html). 看到最新信息;
+
+| Maven artifactId  | Prerequisites                                                | JAR                                                          |
+| ----------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| poi               | [commons-logging](https://search.maven.org/#artifactdetails%7Ccommons-logging%7Ccommons-logging%7C1.2%7Cjar), [commons-codec](https://search.maven.org/#artifactdetails%7Ccommons-codec%7Ccommons-codec%7C1.10%7Cjar), [commons-collections](https://search.maven.org/#artifactdetails%7Corg.apache.commons%7Ccommons-collections4%7C4.1%7Cjar), [log4j](https://search.maven.org/#artifactdetails%7Clog4j%7Clog4j%7C1.2.17%7Cbundle) | poi-version-yyyymmdd.jar                                     |
+| poi-scratchpad    | [poi](https://search.maven.org/#search%7Cgav%7C1%7Cg:org.apache.poi%20AND%20a:poi) | poi-scratchpad-version-yyyymmdd.jar                          |
+| poi-ooxml         | [poi](https://search.maven.org/#search%7Cgav%7C1%7Cg:org.apache.poi%20AND%20a:poi), [poi-ooxml-schemas](https://search.maven.org/#search%7Cgav%7C1%7Cg:org.apache.poi%20AND%20a:poi-ooxml-schemas) | poi-ooxml-version-yyyymmdd.jar                               |
+| poi-ooxml-schemas | [xmlbeans](https://search.maven.org/#artifactdetails%7Corg.apache.xmlbeans%7Cxmlbeans%7C2.6.0%7Cjar) | poi-ooxml-schemas-version-yyyymmdd.jar                       |
+| poi-examples      | [poi](https://search.maven.org/#search%7Cgav%7C1%7Cg:org.apache.poi%20AND%20a:poi), [poi-scratchpad](https://search.maven.org/#search%7Cgav%7C1%7Cg:org.apache.poi%20AND%20a:poi-scratchpad), [poi-ooxml](https://search.maven.org/#search%7Cgav%7C1%7Cg:org.apache.poi%20AND%20a:poi-ooxml) | poi-examples-version-yyyymmdd.jar                            |
+| ooxml-schemas     | [xmlbeans](https://search.maven.org/#artifactdetails%7Corg.apache.xmlbeans%7Cxmlbeans%7C2.6.0%7Cjar) | [ooxml-schemas-1.3.jar](https://search.maven.org/#artifactdetails%7Corg.apache.poi%7Cooxml-schemas%7C1.3%7Cjar) |
+| ooxml-security    | [xmlbeans](https://search.maven.org/#artifactdetails%7Corg.apache.xmlbeans%7Cxmlbeans%7C2.6.0%7Cjar) For signing: [bcpkix-jdk15on](https://search.maven.org/#artifactdetails%7Corg.bouncycastle%7Cbcpkix-jdk15on%7C1.58%7Cjar), [bcprov-jdk15on](https://search.maven.org/#artifactdetails%7Corg.bouncycastle%7Cbcprov-jdk15on%7C1.58%7Cjar), [xmlsec](https://search.maven.org/#artifactdetails%7Corg.apache.santuario%7Cxmlsec%7C2.1.0%7Cbundle), [slf4j-api](https://search.maven.org/#artifactdetails%7Corg.slf4j%7Cslf4j-api%7C1.7.25%7Cjar) | [ooxml-security-1.1.jar ](https://search.maven.org/#artifactdetails%7Corg.apache.poi%7Cooxml-security%7C1.1%7Cjar) |
+
+ 从上面表格中可以看出,如果只是处理Excel,我们只需导入poi,poi-ooxml, poi-ooxml-schemas就可;
+
+###poi支持的文档有
+
+主要是观察文件后缀的区别
+
+1. HSSF提供读写Microsoft Excel XLS格式档案的功能。
+2. XSSF提供读写Microsoft Excel OOXML XLSX格式档案的功能。
+3. HWPF提供读写Microsoft Word DOC格式档案的功能。
+4. HSLF提供读写Microsoft PowerPoint格式档案的功能。 
+5. HDGF提供读Microsoft Visio格式档案的功能。 HPBF提供读Microsoft 
+6. Publisher格式档案的功能。
+7. HSMF提供读Microsoft Outlook格式档案的功能
+
+![1569393804012](assets/1569393804012.png)Workbook的子类有，我们可以根据上边列表的区别进行实例化。![1569393901051](assets/1569393901051.png)
+
+一般情况下我们需要处理的就是XLSX,即![1569393555792](assets/1569393555792.png)Excel2007版本。
+
+### 使用POI的核心思想
+
+我们需要牢记一点，使用POI生成或读取EXCEL是做法跟我们手动写入或读取EXCEL的步骤是一样的！**没错就是一样的！**使用POI的时候我们也需要跟肉眼读取一样。
+
+我们手动操作excel的不走是，首先创建一个报表，然后创建一个sheet，然后创建一个行（隐式），然后再在各自中写内容。
+
+### POI的核心对象
+
+1. Workbook---Excel的文档对象,即代表整个Excel文档文件,针对不同的Excel类型分为：HSSFWorkbook（2003）和 XSSFWorkbool（2007）
+2. Sheet---抽象(代表)Excel的表单页,可以设置选择某一sheet页或修改sheet页名字。
+3. Row---抽象(代表)Excel的行
+4. Cell---抽象(代表)Excel的单元格
+5. CellStyle---抽象(代表)单元格样式,比如背景颜色等等
+6. Font---抽象(代表)Excel的字体
+
+我们通过POI操作Excel的时候其实就是先获取Excel的总长度,然后通过循环,处理每一行的数据,然后通过Row获取到一共有多少列,再次进行循环,获取到每一列的值,简单的总结就是**无论是对Excel进行读取,还是对Excel进行写入,都会经历一次嵌套循环,我们需要自己组织从Excel读取的数据,或将我们原本的数据组织好,通过循环写入Excel中。因为Excel有两个维度,行与列,所以我们循环也就只有两层,分别操作行与列。**
+
+### POI常见场景
+
+一般而言我们在项目中碰到Excel的操作,不是进行读取就是进行制作。
+
+读取:一般都是用户上传Excel后对数据进行读取,可以通过
+
+```java
+//根据上传流信息创建工作簿        
+Workbook workbook = WorkbookFactory.create(attachment.getInputStream()); 
+```
+
+的方式创建工作簿,即Excel的文档对象。
