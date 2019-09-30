@@ -1199,6 +1199,26 @@ Record:![1569822383120](assets/1569822383120.png)
 
 java代码想要与MongoDB数据库进行交互,也是需要通过MongoDB官方提供的数据库驱动来完成,数据库驱动中就包含了,能够操作MongoDB的各种类。
 
+### MongoTemplate使用指南
+
+在springboot中,当且仅当我们引入了mongo的启动器的时候,就可以自动注入一个MongoTemplate 的 bean了。
+
+```pom
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+```
+
+`@Autowired     private MongoTemplate mongoTemplate; `
+
+在使用MongoTemplate的使用中,有两个类需要我们特别记忆
+
+1. Criteria类：它封装所有的语句，以方法的形式进行查询。
+2. Query类：这是将语句进行封装或者添加排序之类的操作。
+
+简单的说就是通过Criteria构造查询条件,然后封装成一个Query类(一般是通过Query的构造函数进行封装),最终将封装后的Query实例传入到MongoTemplate的增删改查方法中进行查询。
+
 # 工作技能
 
 > 主要是记录一些技术框架使用思路,比如POI,activiti,这个章节的特点就是都是技能型知识,第一要求就是看到自制文档后能快速上手使用。并且代码比较固定,需要我们强行背下来,是**记忆为主理解为辅**的章节。
