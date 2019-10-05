@@ -434,6 +434,12 @@ synchronized(this){
 
 具体的可以听龙虾三少的那个秒杀收费课程。
 
+## 页面静态化
+
+网页静态化就是通过生成HTML文件的方式，让用户尽可能多的访问HTML文件，而不是老是调用数据库生成网页。这样可以降低服务器的负载。
+
+页面静态化做到的效果是,将一些动态的页面,提前生成html,从而达到动态页面静态化的效果!
+
 #服务层
 
 ##JavaEE相关
@@ -1333,3 +1339,14 @@ Workbook workbook = WorkbookFactory.create(attachment.getInputStream());
 ```
 
 的方式创建工作簿,即Excel的文档对象。
+
+##Nginx
+
+### nginx中server_name的匹配规则
+
+在日常开发中,经常发现,在server_name属性没有匹配上的时候,依旧能通过ip或localhost访问到nginx服务器,这与nginx的server_name匹配规则有关
+
+在开始学nginx的时候server_name明明没有匹配上，但竟然访问到了，还以为server_name不起作用，后来发现server_name的匹配规则是：先遍历所有配置的server_name，如果找到了，则执行对应的server，如果没有找到，则默认执行第一个server。
+
+即,当我们有个域名绑定的ip指向了nginx服务器的时候,无论如果即使没有匹配上任何一个配置文件中的server_name时,依旧会访问nginx配置的第一个server_name内容,而不会出现什么都访问不了的情况。
+
