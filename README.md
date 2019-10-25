@@ -399,13 +399,15 @@ synchronized(this){
 
 上面我们讲到的是客户端,那么对这些客户端的管理是通过
 
-## 简要的解释下什么是OAuth2.0
+## OAuth2.0协议
+
+### 简要的解释下什么是OAuth2.0
 
 首先我们需要明确一点,OAuth2.0是一个协议,协议就是一种规范,规范的实现方式有很多种,我们可以使用spring security、shiro实现、自己通过servlet实现。
 
 **简单说，OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（token），用来代替密码，供第三方应用使用。**
 
-## OAuth 2.0模型中令牌(token)与密码的区别
+### OAuth 2.0模型中令牌(token)与密码的区别
 
 令牌（token）与密码（password）的作用是一样的，都可以进入系统，但是有三点差异。
 
@@ -415,6 +417,102 @@ synchronized(this){
 4. 令牌的使用者是第三方应用,而密码的使用者是资源持有用户。
 
 注意，只要知道了令牌，就能进入系统。系统一般不会再次确认身份，所以**令牌必须保密，泄漏令牌与泄漏密码的后果是一样的。** 这也是为什么令牌的有效期，一般都设置得很短的原因。
+
+### 授权码模式细节
+
+ ![授权码模式](C:\Users\zhangdaxin3\OneDrive\0.super-book\assets\bg2014051204.png) 
+
+（A）用户访问客户端，后者将前者导向认证服务器。
+
+（B）用户选择是否给予客户端授权(是否认证,以及认证范围的页面是由认证服务器提供的)。
+
+（C）假设用户给予授权，认证服务器将用户导向客户端事先指定的"重定向URI"（redirection URI），同时附上一个授权码。
+
+（D）客户端收到授权码，附上早先的"重定向URI"，向认证服务器申请令牌。这一步是在客户端的后台的服务器上完成的，对用户不可见。
+
+（E）认证服务器核对了授权码和重定向URI，确认无误后，向客户端发送访问令牌（access token）和更新令牌（refresh token）。
+
+下面是上面这些步骤所需要的参数。
+
+A步骤中，客户端申请认证的URI，包含以下参数：
+
+- response_type：表示授权类型，必选项，此处的值固定为"code"
+- client_id：表示客户端的ID，必选项
+- redirect_uri：表示重定向URI，可选项
+- scope：表示申请的权限范围，可选项
+- state：表示客户端的当前状态，可以指定任意值，认证服务器会原封不动地返回这个值。
+
+ 下面是一个例子。 
+
+```http
+GET /authorize?response_type=code&client_id=s6BhdRkqt3&state=xyz&redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb 
+HTTP/1.1
+Host: server.example.com
+```
+
+C步骤中，认证服务器回应客户端的URI，包含以下参数：
+
+- code：表示授权码，必选项。该码的有效期应该很短，通常设为10分钟，客户端只能使用该码一次，否则会被授权服务器拒绝。该码与客户端ID和重定向URI，是一一对应关系。
+- state：如果客户端的请求中包含这个参数，认证服务器的回应也必须一模一样包含这个参数。
+
+ 下面是一个例子。 
+
+```http
+HTTP/1.1 302 Found
+Location: https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA
+          &state=xyz
+```
+
+D步骤中，客户端向认证服务器申请令牌的HTTP请求，包含以下参数：
+
+- grant_type：表示使用的授权模式，必选项，此处的值固定为"authorization_code"。
+- code：表示上一步获得的授权码，必选项。
+- redirect_uri：表示重定向URI，必选项，且必须与A步骤中的该参数值保持一致。
+- client_id：表示客户端ID，必选项。
+
+ 下面是一个例子。 
+
+```http
+POST /token HTTP/1.1
+Host: server.example.com
+Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA
+&redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb
+```
+
+E步骤中，认证服务器发送的HTTP回复，包含以下参数：
+
+- access_token：表示访问令牌，必选项。
+- token_type：表示令牌类型，该值大小写不敏感，必选项，可以是bearer类型或mac类型。
+- expires_in：表示过期时间，单位为秒。如果省略该参数，必须其他方式设置过期时间。
+- refresh_token：表示更新令牌，用来获取下一次的访问令牌，可选项。(刷新token必须保存在客户端的服务器中,这样即使通过抓包获得了access_token,也会在短时间内失效,当access_token失效的时候,服务端就可以自动利用刷新token去资源服务器获取数据,**从而实现,token失效,但是用户不用重新首选的效果!**)
+- scope：表示权限范围，如果与客户端申请的范围一致，此项可省略。
+
+ 下面是一个例子。 
+
+```http
+     HTTP/1.1 200 OK
+     Content-Type: application/json;charset=UTF-8
+     Cache-Control: no-store
+     Pragma: no-cache
+
+     {
+       "access_token":"2YotnFZFEjr1zCsicMWpAA",
+       "token_type":"example",
+       "expires_in":3600,
+       "refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
+       "example_parameter":"example_value"
+     }
+
+```
+
+ 从上面代码可以看到，相关参数使用JSON格式发送（Content-Type: application/json）。此外，HTTP头信息中明确指定不得缓存。 
+
+注意，只要知道了令牌(access_token)，就能进入系统，access_token肯定在应用服务提供商的某一块内存中对应着用户数据，可能在作为redis的key去匹配他的值等等，access_token就相当于确定了用户身份，能够取得用户的数据资源。系统一般不会再次确认身份，所以**令牌必须保密，泄漏令牌与泄漏密码的后果是一样的。** 这也是为什么令牌的有效期，一般都设置得很短的原因。
+
+其他授权模式可以查看阮一峰老师的博客 http://www.ruanyifeng.com/blog/2014/05/oauth_2_0.html?tdsourcetag=s_pctim_aiomsg 
 
 ## maven中环境隔离的套路
 
@@ -429,7 +527,7 @@ synchronized(this){
 首先我们需要对在进行领域驱动设计的时候,会根据三层架构,将代码分为视图层、业务逻辑层、持久层。每个层都会有自己的侧重点。
 
 1. 视图层侧重点---前端界面的展示。视图层通过不同前端界面的展示,去聚合不同的领域模型,生成新的VO对象去展示。
-2. 业务逻辑层侧重点---领域对象,领域模型才是我们真正要关注的业务层面的对象。**也就是说我们的业务数据库怎样去设计,都取决于领域模型!!!**
+2. 业务逻辑层侧重点---领域对象,领域模型才是我们真正要关注的业务层面(service层)的对象。**也就是说我们的业务数据库怎样去设计,都取决于领域模型!!!**
 3. 业务模型的设计最终需要反映到我们的持久层,也就是反映到我们的数据模型上面(这也是mybatis-code-helper提供了从DataObject到数据库建表的功能,因为在领域驱动设计的时候,先出来的就是DomainObject然后是DataObject,然后才是数据表,所以很有必要增加从DataObject到数据表的功能,这也是我们经常性的做法)。**数据模型的设计重点是:效率设计、边界设计、分库分表设计等等**,持久层的设计就是为了效率,以前可能还会考虑存储空间,现在完全不需要的。
 
 具体的可以听龙虾三少的那个秒杀收费课程。
