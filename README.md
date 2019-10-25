@@ -420,7 +420,7 @@ synchronized(this){
 
 ### 授权码模式细节
 
- ![授权码模式](C:\Users\zhangdaxin3\OneDrive\0.super-book\assets\bg2014051204.png) 
+ ![授权码模式](.\assets\bg2014051204.png) 
 
 （A）用户访问客户端，后者将前者导向认证服务器。
 
